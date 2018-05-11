@@ -16,12 +16,20 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
 
     @Override
     public Entry<K, V> min() {
-        return null;
+        Node current = root;
+        while(current.getRight() != null) {
+            current = current.getRight();
+        }
+        return current.getEntry();
     }
 
     @Override
     public Entry<K, V> max() {
-        return null;
+        Node current = root;
+        while(current.getLeft() != null) {
+            current = current.getLeft();
+        }
+        return current.getEntry();
     }
 
     @Override
@@ -55,8 +63,12 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             // If current is equal to new
             if(comp.compare(current.getEntry().key, newNode.getEntry().key) == 0) {
                 V toReturn = (V) current.getEntry().value;
-                newNode.setLeft(current.getLeft());
-                newNode.setRight(current.getRight());
+                if(current.getLeft() != null) {
+                    newNode.setLeft(current.getLeft());
+                }
+                if(current.getRight() != null) {
+                    newNode.setRight(current.getRight());
+                }
                 if(current.getParent() != null) {
                     newNode.setParent(current.getParent());
                     if (newNode.getParent().getLeft() == current) {
