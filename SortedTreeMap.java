@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -206,27 +208,36 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
 
     @Override
     public boolean containsValue(V value) {
-        Node current = root;
-        for(int i = 0; i < size; ++i) {
-            // If current is smaller than new
-            if(comp.compare(current.getEntry().value, value) < 0 && current.getRight() != null) {
-                current = current.getRight();
-            }
-            // If current is bigger than new
-            if(comp.compare(current.getEntry().value, value) > 0 && current.getLeft() != null) {
-                current = current.getLeft();
-            }
-            // If current is equal to new
-            if(comp.compare(current.getEntry().value, value) == 0) {
-                return true;
-            }
+        return preorderContains(root, value);
+    }
+
+    private boolean preorderContains(Node root, V value) {
+        if(root == null) {
+            return false;
         }
-        return false;
+        if(comp.compare(root.getEntry().value, value) == 0) {
+            return true;
+        }
+        boolean left = preorderContains(root.getLeft(), value);
+        boolean right = preorderContains(root.getRight(), value);
+        return left ? left : right;
     }
 
     @Override
     public Iterable<K> keys() {
-        return null;
+        ArrayList<K> keys = new ArrayList<>();
+        inorderKeys(root, keys);
+        return keys;
+    }
+
+    private void inorderKeys(Node root, ArrayList<K> keys) {
+        if(root.getLeft() != null) {
+            inorderKeys(root.getLeft(), keys);
+        }
+        keys.add((K) root.getEntry().key);
+        if(root.getRight() != null) {
+            inorderKeys(root.getRight(), keys);
+        }
     }
 
     @Override
@@ -271,7 +282,14 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
 
     @Override
     public void clear() {
+        preorderClear(root);
+        size = 0;
+    }
 
+    private void preorderClear(Node root) {
+        preorderClear(root.getLeft());
+        preorderClear(root.getRight());
+        root.setEntry(null);
     }
 
     public Node getRoot() {
