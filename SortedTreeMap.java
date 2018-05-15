@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -151,6 +150,44 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             // If current is equal to new
             if(comp.compare(current.getEntry().key, key) == 0) {
                 V toReturn = (V) current.getEntry().value;
+
+                if(current == root) {
+                    if(current.getRight() != null) {
+                        root = current.getRight();
+
+                        Node rightMin = current.getRight();
+                        while(rightMin.getLeft() != null) {
+                            rightMin = rightMin.getLeft();
+                        }
+                        rightMin.setLeft(current.getLeft());
+                        current.getLeft().setParent(rightMin);
+                    } else {
+                        root = current.getLeft();
+                    }
+                    root.setParent(null);
+                } else {
+                    if(current.getRight() != null) {
+                        Node rightMin = current.getRight();
+                        while(rightMin.getLeft() != null) {
+                            rightMin = rightMin.getLeft();
+                        }
+                        rightMin.setLeft(current.getLeft());
+                        current.getLeft().setParent(rightMin);
+
+                        if(current.getParent().getLeft() == current) {
+                            current.getParent().setLeft(current.getRight());
+                        } else {
+                            current.getParent().setRight(current.getRight());
+                        }
+                        current.getRight().setParent(current.getParent());
+
+
+                    }
+                }
+
+                current.setParent(null);
+                current.setRight(null);
+                current.setLeft(null);
                 current.setEntry(null);
                 --size;
                 return toReturn;
@@ -282,14 +319,8 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
 
     @Override
     public void clear() {
-        preorderClear(root);
+        root = null;
         size = 0;
-    }
-
-    private void preorderClear(Node root) {
-        preorderClear(root.getLeft());
-        preorderClear(root.getRight());
-        root.setEntry(null);
     }
 
     public Node getRoot() {

@@ -3,7 +3,6 @@ public class Node {
     private Node left;
     private Node right;
     private Node parent;
-    private boolean black;
 
     public Node(Entry e) {
         entry = e;
@@ -39,13 +38,5 @@ public class Node {
 
     public void setParent(Node parent) {
         this.parent = parent;
-    }
-
-    public boolean getBlack() {
-        return black;
-    }
-
-    public void setBlack(boolean black) {
-        this.black = black;
     }
 }
