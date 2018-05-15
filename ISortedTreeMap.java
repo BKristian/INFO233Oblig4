@@ -1,5 +1,3 @@
-package src;
-
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;

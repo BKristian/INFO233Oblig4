@@ -1,5 +1,3 @@
-package src;
-
 import fj.*;
 import fj.data.HashMap;
 import fj.data.List;
@@ -31,7 +29,7 @@ public class SortedTreeMapTest {
      * @param ord Function that determines order between keys
      * @param <K> The type of keys
      * @param <V> The type of values
-     * @return Generator of src.SortedTreeMap<K, V>
+     * @return Generator of SortedTreeMap<K, V>
      */
     public static <K extends Comparable<? super K>, V> Gen<SortedTreeMap<K, V>> arbitrarySortedTreeMap(
             final Gen<K> ks, final Gen<V> vs, Ord<K> ord
@@ -55,7 +53,7 @@ public class SortedTreeMapTest {
     private static final Gen<String> arbString = arbList(azCharacter).map(List::asString);
 
     /**
-     * Generator for a random src.SortedTreeMap
+     * Generator for a random SortedTreeMap
      */
     private static final Gen<SortedTreeMap<Integer, String>> treeMap = arbitrarySortedTreeMap(
             arbInteger,  arbString, Ord.intOrd);
@@ -162,7 +160,7 @@ public class SortedTreeMapTest {
     }
 
     /**
-     *  Check that add(src.Entry) returns the previous value
+     *  Check that add(Entry) returns the previous value
      */
     public Property add_entry_returns_previous_value() {
         return property(isKVList, arbString,
