@@ -335,7 +335,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             @Override
             public Iterator<Entry<K, V>> iterator() {
                 return new Iterator<Entry<K, V>>() {
-                    Node<K, V> next = null;
+                    Node<K, V> next = getFirst();
                     @Override
                     public boolean hasNext() {
                         return next != null;
@@ -352,12 +352,14 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
                     }
 
                     Node<K, V> successor(Node<K, V> node) {
-                        if (node == null)
+                        if (node == null) {
                             return null;
+                        }
                         else if (node.getRight()!= null) {
                             Node<K, V> right = node.getRight();
-                            while (right.getLeft()!= null)
+                            while (right.getLeft()!= null) {
                                 right = right.getLeft();
+                            }
                             return right;
                         } else {
                             Node<K, V> parent = node.getParent();
@@ -378,6 +380,17 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
                     consumer.accept(e);
             }
         };
+    }
+
+    private Node getFirst() {
+        if(root == null) {
+            return null;
+        }
+        Node first = root;
+        while(first.getLeft() != null) {
+            first = first.getLeft();
+        }
+        return first;
     }
 
     @Override
@@ -430,7 +443,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
     public void removeIf(BiPredicate<K, V> p) {
         for (Entry<K, V> entry : entries()) {
             if (p.test(entry.key, entry.value)) {
-                remove(entry.key);
+                this.remove(entry.key);
             }
         }
     }
