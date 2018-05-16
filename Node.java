@@ -1,42 +1,42 @@
-public class Node {
-    private Entry entry;
+class Node<K, V> {
+    private Entry<K, V> entry;
     private Node left;
     private Node right;
     private Node parent;
 
-    public Node(Entry e) {
+    Node(Entry<K,V> e) {
         entry = e;
     }
 
-    public Entry getEntry() {
+    Entry<K, V> getEntry() {
         return entry;
     }
 
-    public void setEntry(Entry entry) {
+    void setEntry(Entry<K, V> entry) {
         this.entry = entry;
     }
 
-    public Node getLeft() {
+    Node<K, V> getLeft() {
         return left;
     }
 
-    public void setLeft(Node left) {
+    void setLeft(Node left) {
         this.left = left;
     }
 
-    public Node getRight() {
+    Node<K, V> getRight() {
         return right;
     }
 
-    public void setRight(Node right) {
+    void setRight(Node right) {
         this.right = right;
     }
 
-    public Node getParent() {
+    Node<K, V> getParent() {
         return parent;
     }
 
-    public void setParent(Node parent) {
+    void setParent(Node parent) {
         this.parent = parent;
     }
 }

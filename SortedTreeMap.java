@@ -1,15 +1,16 @@
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 
 public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISortedTreeMap<K, V> {
     private Comparator comp;
-    private Node root;
+    private Node<K, V> root;
     private int size;
 
-    public SortedTreeMap(Comparator c) {
+    SortedTreeMap(Comparator c) {
         root = null;
         size = 0;
         comp = c;
@@ -17,7 +18,10 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
 
     @Override
     public Entry<K, V> min() {
-        Node current = root;
+        if(root == null) {
+            return null;
+        }
+        Node<K, V> current = root;
         while(current.getLeft() != null) {
             current = current.getLeft();
         }
@@ -26,7 +30,10 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
 
     @Override
     public Entry<K, V> max() {
-        Node current = root;
+        if(root == null) {
+            return null;
+        }
+        Node<K, V> current = root;
         while(current.getRight() != null) {
             current = current.getRight();
         }
@@ -41,17 +48,17 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
     @Override
     public V add(Entry<K, V> entry) {
         if(root == null) {
-            root = new Node(entry);
+            root = new Node<>(entry);
             ++size;
             return null;
         }
 
-        Node current = root;
+        Node<K, V> current = root;
         for(int i = 0; i < size; ++i) {
             // If current is smaller than new
             if(comp.compare(current.getEntry().key, entry.key) < 0) {
                 if(current.getRight() == null) {
-                    Node node = new Node(entry);
+                    Node<K, V> node = new Node<>(entry);
                     current.setRight(node);
                     node.setParent(current);
                     ++size;
@@ -62,7 +69,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             // If current is bigger than new
             if(comp.compare(current.getEntry().key, entry.key) > 0) {
                 if(current.getLeft() == null) {
-                    Node node = new Node(entry);
+                    Node<K, V> node = new Node<>(entry);
                     current.setLeft(node);
                     node.setParent(current);
                     ++size;
@@ -72,7 +79,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             }
             // If current is equal to new
             if(comp.compare(current.getEntry().key, entry.key) == 0) {
-                V toReturn = (V) current.getEntry().value;
+                V toReturn = current.getEntry().value;
                 current.setEntry(entry);
                 return toReturn;
             }
@@ -87,7 +94,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             throw new NoSuchElementException();
         }
 
-        Node current = root;
+        Node<K, V> current = root;
         for(int i = 0; i < size; ++i) {
             // If current is smaller than new
             if(comp.compare(current.getEntry().key, key) < 0 && current.getRight() != null) {
@@ -99,7 +106,8 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             }
             // If current is equal to new
             if(comp.compare(current.getEntry().key, key) == 0) {
-                current.setEntry(new Entry(key, value));
+                current.setEntry(new Entry<>(key, value));
+                return;
             }
         }
 
@@ -112,7 +120,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             throw new NoSuchElementException();
         }
 
-        Node current = root;
+        Node<K, V> current = root;
         for(int i = 0; i < size; ++i) {
             // If current is smaller than new
             if(comp.compare(current.getEntry().key, key) < 0 && current.getRight() != null) {
@@ -124,7 +132,8 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             }
             // If current is equal to new
             if(comp.compare(current.getEntry().key, key) == 0) {
-                current.setEntry(new Entry(key, f.apply(key, (V) current.getEntry().value)));
+                current.setEntry(new Entry<>(key, f.apply(key, current.getEntry().value)));
+                return;
             }
         }
 
@@ -137,7 +146,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             throw new NoSuchElementException();
         }
 
-        Node current = root;
+        Node<K, V> current = root;
         for(int i = 0; i < size; ++i) {
             // If current is smaller than new
             if(comp.compare(current.getEntry().key, key) < 0 && current.getRight() != null) {
@@ -149,39 +158,35 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             }
             // If current is equal to new
             if(comp.compare(current.getEntry().key, key) == 0) {
-                V toReturn = (V) current.getEntry().value;
+                V toReturn = current.getEntry().value;
 
                 if(current == root) {
                     if(current.getRight() != null) {
                         root = current.getRight();
+                        root.setParent(null);
 
-                        Node rightMin = current.getRight();
-                        while(rightMin.getLeft() != null) {
-                            rightMin = rightMin.getLeft();
-                        }
-                        rightMin.setLeft(current.getLeft());
-                        current.getLeft().setParent(rightMin);
-                    } else {
+                        setLeftmostOfRightsFirstLeft(current);
+                    } else if(current.getLeft() != null) {
                         root = current.getLeft();
+                        root.setParent(null);
+                    } else if(size == 1) {
+                        root = null;
                     }
-                    root.setParent(null);
-                } else {
-                    if(current.getRight() != null) {
-                        Node rightMin = current.getRight();
-                        while(rightMin.getLeft() != null) {
-                            rightMin = rightMin.getLeft();
-                        }
-                        rightMin.setLeft(current.getLeft());
-                        current.getLeft().setParent(rightMin);
+                } else if(current.getRight() != null) {
+                    setLeftmostOfRightsFirstLeft(current);
 
-                        if(current.getParent().getLeft() == current) {
-                            current.getParent().setLeft(current.getRight());
-                        } else {
-                            current.getParent().setRight(current.getRight());
-                        }
-                        current.getRight().setParent(current.getParent());
-
-
+                    if(current.getParent().getLeft() == current) {
+                        current.getParent().setLeft(current.getRight());
+                    } else {
+                        current.getParent().setRight(current.getRight());
+                    }
+                    current.getRight().setParent(current.getParent());
+                } else if (current.getLeft() != null) {
+                    current.getLeft().setParent(current.getParent());
+                    if(current.getParent().getLeft() == current) {
+                        current.getParent().setLeft(current.getLeft());
+                    } else {
+                        current.getParent().setRight(current.getLeft());
                     }
                 }
 
@@ -197,13 +202,24 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
         throw new NoSuchElementException();
     }
 
+    private void setLeftmostOfRightsFirstLeft(Node<K, V> current) {
+        if(current.getLeft() != null) {
+            Node<K, V> rightMin = current.getRight();
+            while (rightMin.getLeft() != null) {
+                rightMin = rightMin.getLeft();
+            }
+            rightMin.setLeft(current.getLeft());
+            current.getLeft().setParent(rightMin);
+        }
+    }
+
     @Override
     public V getValue(Object key) throws NoSuchElementException {
         if(root == null) {
             throw new NoSuchElementException();
         }
 
-        Node current = root;
+        Node<K, V> current = root;
         for(int i = 0; i < size; ++i) {
             // If current is smaller than new
             if(comp.compare(current.getEntry().key, key) < 0 && current.getRight() != null) {
@@ -215,8 +231,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
             }
             // If current is equal to new
             if(comp.compare(current.getEntry().key, key) == 0) {
-                V toReturn = (V) current.getEntry().value;
-                return toReturn;
+                return current.getEntry().value;
             }
         }
 
@@ -225,7 +240,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
 
     @Override
     public boolean containsKey(K key) {
-        Node current = root;
+        Node<K, V> current = root;
         for(int i = 0; i < size; ++i) {
             // If current is smaller than new
             if(comp.compare(current.getEntry().key, key) < 0 && current.getRight() != null) {
@@ -248,7 +263,7 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
         return preorderContains(root, value);
     }
 
-    private boolean preorderContains(Node root, V value) {
+    private boolean preorderContains(Node<K, V> root, V value) {
         if(root == null) {
             return false;
         }
@@ -257,54 +272,167 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
         }
         boolean left = preorderContains(root.getLeft(), value);
         boolean right = preorderContains(root.getRight(), value);
-        return left ? left : right;
+        return left || right;
     }
 
     @Override
     public Iterable<K> keys() {
-        ArrayList<K> keys = new ArrayList<>();
-        inorderKeys(root, keys);
-        return keys;
-    }
+        return new Iterable<K>() {
+            @Override
+            public Iterator<K> iterator() {
+                return new Iterator<K>() {
+                    Iterator<Entry<K, V>> entries = entries().iterator();
+                    @Override
+                    public boolean hasNext() {
+                        return entries.hasNext();
+                    }
 
-    private void inorderKeys(Node root, ArrayList<K> keys) {
-        if(root.getLeft() != null) {
-            inorderKeys(root.getLeft(), keys);
-        }
-        keys.add((K) root.getEntry().key);
-        if(root.getRight() != null) {
-            inorderKeys(root.getRight(), keys);
-        }
+                    @Override
+                    public K next() {
+                        return entries.next().key;
+                    }
+                };
+            }
+
+            @Override
+            public void forEach(Consumer<? super K> consumer) {
+                for (K k : this)
+                    consumer.accept(k);
+            }
+        };
     }
 
     @Override
     public Iterable<V> values() {
-        return null;
+        return new Iterable<V>() {
+            @Override
+            public Iterator<V> iterator() {
+                return new Iterator<V>() {
+                    Iterator<Entry<K, V>> entries = entries().iterator();
+                    @Override
+                    public boolean hasNext() {
+                        return entries.hasNext();
+                    }
+
+                    @Override
+                    public V next() {
+                        return entries.next().value;
+                    }
+                };
+            }
+
+            @Override
+            public void forEach(Consumer<? super V> consumer) {
+                for (V v : this)
+                    consumer.accept(v);
+            }
+        };
     }
 
     @Override
     public Iterable<Entry<K, V>> entries() {
-        return null;
+        return new Iterable<Entry<K, V>>() {
+            @Override
+            public Iterator<Entry<K, V>> iterator() {
+                return new Iterator<Entry<K, V>>() {
+                    Node<K, V> next = null;
+                    @Override
+                    public boolean hasNext() {
+                        return next != null;
+                    }
+
+                    @Override
+                    public Entry<K, V> next() {
+                        Node<K, V> node = next;
+                        if (node == null) {
+                            throw new NoSuchElementException();
+                        }
+                        next = successor(node);
+                        return node.getEntry();
+                    }
+
+                    Node<K, V> successor(Node<K, V> node) {
+                        if (node == null)
+                            return null;
+                        else if (node.getRight()!= null) {
+                            Node<K, V> right = node.getRight();
+                            while (right.getLeft()!= null)
+                                right = right.getLeft();
+                            return right;
+                        } else {
+                            Node<K, V> parent = node.getParent();
+                            Node<K, V> child = node;
+                            while (parent != null && child == parent.getRight()) {
+                                child = parent;
+                                parent = parent.getParent();
+                            }
+                            return parent;
+                        }
+                    }
+                };
+            }
+
+            @Override
+            public void forEach(Consumer<? super Entry<K, V>> consumer) {
+                for (Entry<K, V> e : this)
+                    consumer.accept(e);
+            }
+        };
     }
 
     @Override
     public Entry<K, V> higherOrEqualEntry(K key) {
+        Iterator<Entry<K, V>> entries = entries().iterator();
+        Entry<K, V> curr;
+
+        while(entries.hasNext()) {
+            curr = entries.next();
+            if(comp.compare(curr.key, key) == 0) {
+                return curr;
+            } else if(comp.compare(curr.key, key) > 0) {
+                return curr;
+            }
+        }
         return null;
     }
 
     @Override
     public Entry<K, V> lowerOrEqualEntry(K key) {
-        return null;
+        Iterator<Entry<K, V>> entries = entries().iterator();
+        Entry<K, V> curr;
+        Entry<K, V> toReturn = null;
+
+        while(entries.hasNext()) {
+            curr = entries.next();
+            if(comp.compare(curr.key, key) == 0) {
+                return curr;
+            }
+            if(comp.compare(curr.key, key) < 1) {
+                if(toReturn == null) {
+                    toReturn = curr;
+                }
+                if(comp.compare(curr.key, toReturn.key) > 0) {
+                    toReturn = curr;
+                }
+            }
+        }
+        return toReturn;
     }
 
     @Override
     public void merge(ISortedTreeMap<K, V> other) {
-
+        for (Entry<K, V> kvEntry : other.entries()) {
+            this.add(kvEntry);
+        }
     }
 
     @Override
     public void removeIf(BiPredicate<K, V> p) {
-
+        for (Entry<K, V> entry : entries()) {
+            if (p.test(entry.key, entry.value)) {
+                remove(entry.key);
+            }
+        }
     }
 
     @Override
@@ -321,13 +449,5 @@ public class SortedTreeMap<K extends Comparable<? super K>, V> implements ISorte
     public void clear() {
         root = null;
         size = 0;
-    }
-
-    public Node getRoot() {
-        return root;
-    }
-
-    public Comparator getComp() {
-        return comp;
     }
 }
